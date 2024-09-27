@@ -1,23 +1,40 @@
 /*
- * InterPatcher
+ * InterPatcher!
  * Patching made easy. Made with love by Jesus-QC.
  * The best monkey patching library for JavaScript.
  */
 
+/*
+ * Data passed to the postfix callbacks.
+ */
 interface PostfixData{
+    /* The context of the original method. */
     context : any,
+    /* The arguments passed to the original method. */
     args : any[],
+    /* The original method so you can call it without causing overflows. */
     originalMethod : Function,
+    /* The return value of the original method. */
     returnValue : any,
 }
 
+/*
+ * Data passed to the prefix callbacks.
+ */
 interface PrefixData extends PostfixData{
+    /* If set to false, the original method will not be called and returnValue will be returned instead. */
     runOriginal : boolean
 }
 
+/*
+ * A patched method.
+ */
 interface PatchedMethod{
+    /* A map of prefix methods with their ids as keys. */
     prefixes : Map<number, Function>,
+    /* A map of postfix methods with their ids as keys. */
     postfixes : Map<number, Function>,
+    /* The original method of the patch. */
     original : Function,
 }
 
@@ -57,6 +74,12 @@ export function addPostfix(targetObject : any, targetMethod : string, callback :
     return id;
 }
 
+/*
+ * Removes a prefix method from the target method. The id is returned by addPrefix.
+ * @param targetObject The object containing the target method
+ * @param targetMethod The name of the target method
+ * @param id The id of the prefix method to be removed
+ */
 export function unpatchPrefix(targetObject : any, targetMethod : string, id : number){
     if (!checkFunction(targetObject, targetMethod))
         return;
@@ -64,12 +87,42 @@ export function unpatchPrefix(targetObject : any, targetMethod : string, id : nu
     targetObject.___ip[targetMethod].prefixes.delete(id);
 }
 
-
+/*
+ * Removes a postfix method from the target method. The id is returned by addPostfix.
+ * @param targetObject The object containing the target method
+ * @param targetMethod The name of the target method
+ * @param id The id of the postfix method to be removed
+ */
 export function unpatchPostfix(targetObject : any, targetMethod : string, id : number){
     if (!checkFunction(targetObject, targetMethod))
         return;
 
     targetObject.___ip[targetMethod].postfixes.delete(id);
+}
+
+/*
+ * Removes all prefix and postfix methods from the target method.
+ * @param targetObject The object containing the target method
+ * @param targetMethod The name of the target method
+ */
+export function unpatchAll(targetObject : any, targetMethod : string){
+    if (!checkFunction(targetObject, targetMethod)) return;
+
+    let patch : PatchedMethod = targetObject.___ip[targetMethod] as PatchedMethod;
+
+    if (patch == undefined){
+        // Function not patched.
+        return;
+    }
+
+    Reflect.defineProperty(targetObject, targetMethod, {
+        value: patch.original,
+        writable: true,
+        configurable: true,
+        enumerable: false
+    });
+
+    delete targetObject.___ip[targetMethod];
 }
 
 /*

@@ -12,8 +12,9 @@ Also called monkey patching 🐒🐒🐒.
 
 # Installation
 ```shell
-npm i @jesusqc/interpatcher
+npm i interpatcher
 ```
+Check out in [npmjs.com](https://www.npmjs.com/package/interpatcher)
 
 # My first patch
 
